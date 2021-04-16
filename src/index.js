@@ -33,8 +33,8 @@ const subscriptionServer = new SubscriptionServer({
   path: '/'
 });
 
-appWS.listen(80, () => {
-  console.log(`Websocket listening on port 80`)
+appWS.listen(8000, () => {
+  console.log(`Websocket listening on port 8000`)
 });
 
 // Init HTTP server and GraphQL Endpoints
@@ -48,7 +48,7 @@ app.use('/graphql', bodyParser.json(), graphqlExpress(request =>
 
 app.use('/graphiql', graphiqlExpress({
   endpointURL: '/graphql',
-  subscriptionsEndpoint: 'ws://localhost:80/',
+  subscriptionsEndpoint: 'ws://localhost:8000/',
   query: 'query { messages }'
 }));
 
