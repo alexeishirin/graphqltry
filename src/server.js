@@ -58,7 +58,9 @@ const server = new ApolloServer({
     resolvers,
     subscriptions: {
         onConnect: () => console.log('Connected to websocket'),
-    }
+    },
+    introspection: true,
+    playground: true
 });
 
 server.applyMiddleware({ app });
