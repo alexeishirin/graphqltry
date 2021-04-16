@@ -69,8 +69,8 @@ var subscriptionServer = new _subscriptionsTransportWs.SubscriptionServer({
   path: '/'
 });
 
-appWS.listen(80, function () {
-  console.log("Websocket listening on port 80");
+appWS.listen(5000, function () {
+  console.log("Websocket listening on port 5000");
 });
 
 // Init HTTP server and GraphQL Endpoints
@@ -84,7 +84,7 @@ app.use('/graphql', _bodyParser2.default.json(), (0, _graphqlServerExpress.graph
 
 app.use('/graphiql', (0, _graphqlServerExpress.graphiqlExpress)({
   endpointURL: '/graphql',
-  subscriptionsEndpoint: 'ws://localhost:80/',
+  subscriptionsEndpoint: 'ws://localhost:8000/',
   query: 'query { messages }'
 }));
 
