@@ -1,30 +1,56 @@
-const express = require('express');
-const { ApolloServer, gql } = require('apollo-server-express');
+const { ApolloServer, PubSub, gql } = require('apollo-server');
+const pubsub = new PubSub();
+const PORT = 4000;
 
-async function startApolloServer() {
-    // Construct a schema, using GraphQL schema language
-    const typeDefs = gql`
-    type Query {
-      hello: String
-    }
-  `;
+// Schema definition
+const typeDefs = gql`
+  type Query {
+    currentNumber: Int
+  }
+  type Subscription {
+    numberIncremented: Int
+  }
+`;
 
-    // Provide resolver functions for your schema fields
-    const resolvers = {
-        Query: {
-            hello: () => 'Hello world!',
+// Resolver map
+const resolvers = {
+    Query: {
+        currentNumber() {
+            return currentNumber;
+        }
+    },
+    Subscription: {
+        numberIncremented: {
+            subscribe: () => pubsub.asyncIterator(['NUMBER_INCREMENTED']),
         },
-    };
+    }
+};
 
-    const server = new ApolloServer({ typeDefs, resolvers });
-    await server.start();
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    subscriptions: {
+        path: '/subscriptions',
+        onConnect: (connectionParams, webSocket, context) => {
+            console.log('Client connected');
+        },
+        onDisconnect: (webSocket, context) => {
+            console.log('Client disconnected')
+        },
+    },
+});
 
-    const app = express();
-    server.applyMiddleware({ app });
-
-    await new Promise(resolve => app.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
-    return { server, app };
+let currentNumber = 0;
+function incrementNumber() {
+    currentNumber++;
+    pubsub.publish('NUMBER_INCREMENTED', { numberIncremented: currentNumber });
+    setTimeout(incrementNumber, 1000);
 }
 
-startApolloServer();
+server.listen().then(({ url }) => {
+    console.log(`🚀 Subscription endpoint ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
+    console.log('Query at studio.apollographql.com/dev')
+});
+
+// Start incrementing
+incrementNumber();
