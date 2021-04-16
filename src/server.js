@@ -1,56 +1,72 @@
-const { ApolloServer, PubSub, gql } = require('apollo-server');
-const pubsub = new PubSub();
-const PORT = 4000;
+const http = require('http');
+const { ApolloServer, PubSub } = require('apollo-server-express');
+const express = require('express');
 
-// Schema definition
-const typeDefs = gql`
-  type Query {
-    currentNumber: Int
-  }
-  type Subscription {
-    numberIncremented: Int
-  }
+const pubsub = new PubSub();
+
+// The DB
+const messages = [];
+
+const typeDefs = `
+type Query {
+  messages: [String!]!
+}
+type Mutation {
+  addMessage(message: String!): [String!]!
+}
+type Subscription {
+  newMessage: String!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
 `;
 
-// Resolver map
 const resolvers = {
     Query: {
-        currentNumber() {
-            return currentNumber;
+        messages() {
+            return messages;
         }
     },
-    Subscription: {
-        numberIncremented: {
-            subscribe: () => pubsub.asyncIterator(['NUMBER_INCREMENTED']),
+    Mutation: {
+        addMessage(root, { message }) {
+            let entry = JSON.stringify({ id: messages.length, message: message });
+            messages.push(entry);
+            pubsub.publish('newMessage', { entry: entry });
+            return messages;
         },
-    }
+    },
+    Subscription: {
+        newMessage: {
+            resolve: (message) => {
+                return message.entry;
+            },
+            subscribe: () => pubsub.asyncIterator('newMessage'),
+        },
+    },
 };
+
+const app = express();
+
+const PORT = 4000;
 
 const server = new ApolloServer({
     typeDefs,
     resolvers,
     subscriptions: {
-        path: '/subscriptions',
-        onConnect: (connectionParams, webSocket, context) => {
-            console.log('Client connected');
-        },
-        onDisconnect: (webSocket, context) => {
-            console.log('Client disconnected')
-        },
-    },
+        onConnect: () => console.log('Connected to websocket'),
+    }
 });
 
-let currentNumber = 0;
-function incrementNumber() {
-    currentNumber++;
-    pubsub.publish('NUMBER_INCREMENTED', { numberIncremented: currentNumber });
-    setTimeout(incrementNumber, 1000);
-}
+server.applyMiddleware({ app });
 
-server.listen().then(({ url }) => {
-    console.log(`🚀 Subscription endpoint ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
-    console.log('Query at studio.apollographql.com/dev')
+const httpServer = http.createServer(app);
+server.installSubscriptionHandlers(httpServer);
+
+httpServer.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
 });
-
-// Start incrementing
-incrementNumber();

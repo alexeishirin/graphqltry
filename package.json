@@ -4,7 +4,7 @@
   "description": "Apollo GraphQL Server Subscriptions example",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/server.js"
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +12,11 @@
   "devDependencies": {},
   "dependencies": {
     "apollo-server": "^2.23.0",
+    "apollo-server-express": "^2.23.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
     "graphql": "^15.5.0",
-    "nodemon": "^2.0.7"
+    "graphql-subscriptions": "^1.2.1",
+    "subscriptions-transport-ws": "^0.9.18"
   }
 }
