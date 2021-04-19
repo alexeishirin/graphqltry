@@ -34,7 +34,7 @@ const resolvers = {
   },
   Subscription: {
     newMessage(message, variables, context, subscription) {
-      console.log(`Serving subscription for user ${variables.userId}`);
+      console.log(`Serving subscription for user someone`);
       return message.entry;
     }
   },
@@ -44,10 +44,10 @@ const destinationFilter = (options, {filter}, subscriptionName) => ({
   // PubSub channel name (newMessage)
   ['newMessage']: {
     filter: (payload, context) => {
-      if (payload.broadcast === true || payload.authToken === context.authToken) {
+      // if (payload.broadcast === true || payload.authToken === context.authToken) {
         return payload.entry;
-      }
-      return null;
+      // }
+      // return null;
     }
   },
 });
